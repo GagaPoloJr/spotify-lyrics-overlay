@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+/* Aktifkan drag region di area yang punya data-tauri-drag-region */
+[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+}
+
+/* Matikan drag untuk tombol, teks, scroll area dll */
+button,
+pre,
+input,
+textarea {
+  -webkit-app-region: no-drag;
+}
