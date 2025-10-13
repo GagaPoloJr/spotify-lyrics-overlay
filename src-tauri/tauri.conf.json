@@ -17,8 +17,8 @@
         "width": 400,
         "height": 200,
         "transparent": true,
-        "decorations": true,
-        "alwaysOnTop": false,
+        "decorations": false,
+        "alwaysOnTop": true,
         "resizable": true,
         "focus": true,
         "visible": true

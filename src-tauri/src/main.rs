@@ -30,7 +30,9 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             spotify::spotify_login,
             spotify::exchange_token,
-            spotify::get_current_track
+            spotify::get_current_track,
+            spotify::get_synced_lyrics,
+            spotify::get_spotify_lyrics_token,
         ])
         .setup(|app| {
             println!("🚀 Deep link plugin initialized");
@@ -131,8 +133,23 @@ fn main() {
 
             // 🪟 atur window overlay
             let window: WebviewWindow = app.get_webview_window("main").unwrap();
-            window.set_always_on_top(false)?;
+            window.set_always_on_top(true)?;
+            window.set_decorations(false)?;
+
             window.set_resizable(true)?;
+
+            #[cfg(target_os = "macos")]
+            unsafe {
+                use objc2_app_kit::NSWindow;
+                let ns_window: *mut objc2_app_kit::NSWindow = window.ns_window().unwrap() as _;
+
+                // hilangkan background putih default macOS
+                (*ns_window).setOpaque(false);
+                (*ns_window).setBackgroundColor(None);
+
+                // biar window transparan penuh, bukan cuma “titlebar”
+                (*ns_window).setHasShadow(false);
+            }
             Ok(())
         })
         .run(tauri::generate_context!())
