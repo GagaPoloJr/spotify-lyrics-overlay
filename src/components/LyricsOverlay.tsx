@@ -40,7 +40,7 @@ export default function LyricsOverlay() {
     try {
       setIsLoading(true);
       console.log(manual ? "🔁 Manual refresh..." : "🎧 Auto refresh...");
-      const current = await getCurrentTrack(token);
+      const current = await getCurrentTrack();
 
       if (!current) {
         console.log("🎵 Tidak ada lagu yang sedang diputar");

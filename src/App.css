@@ -1,34 +1,28 @@
 @import "tailwindcss";
 
-/* html,
-body,
-#root {
-  width: 100%;
-  height: 100%;
-  background: transparent !important;
-}
-
-
-*/
 html,
 body,
 #root {
   margin: 0;
   padding: 0;
-  background-color: rgba(0, 0, 0, 10%);
+  background-color: #0a0a0a;
   overflow: hidden;
-  -webkit-app-region: drag; /* biar bisa drag seluruh area default */
+  width: 100%;
+  height: 100%;
 }
 
-/* Tapi nanti bagian teks (lirik) jangan ikut ke-drag */
-.no-drag {
-  -webkit-app-region: no-drag;
+/* Hide scrollbar for all elements */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-/* Matikan drag untuk tombol, teks, scroll area dll */
-button,
-pre,
-input,
-textarea {
-  -webkit-app-region: no-drag;
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ensure no white flash during resize */
+::selection {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
 }
