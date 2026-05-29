@@ -39,12 +39,14 @@ export default function LyricsSync() {
     const unlistenMini = listen("show-mini-mode", async () => {
       setViewMode("mini");
       const window = getCurrentWindow();
+      await window.setMinSize(new LogicalSize(200, 100));
       await window.setSize(new LogicalSize(200, 100));
     });
 
     const unlistenFull = listen("show-full-mode", async () => {
       setViewMode("full");
       const window = getCurrentWindow();
+      await window.setMinSize(new LogicalSize(480, 350));
       await window.setSize(new LogicalSize(480, 350));
     });
 
@@ -61,8 +63,10 @@ export default function LyricsSync() {
 
     const window = getCurrentWindow();
     if (newMode === "mini") {
+      await window.setMinSize(new LogicalSize(200, 100));
       await window.setSize(new LogicalSize(200, 100));
     } else {
+      await window.setMinSize(new LogicalSize(480, 350));
       await window.setSize(new LogicalSize(480, 350));
     }
   }, [viewMode]);
