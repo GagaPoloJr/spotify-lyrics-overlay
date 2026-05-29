@@ -222,11 +222,22 @@ fn main() {
 
             #[cfg(target_os = "macos")]
             unsafe {
-                use objc2_app_kit::NSWindow as _;
-                let ns_window: *mut objc2_app_kit::NSWindow = window.ns_window().unwrap() as _;
+                use objc2_app_kit::{NSWindow, NSWindowCollectionBehavior};
+                let ns_window: *mut NSWindow = window.ns_window().unwrap() as _;
+
+                // Make window transparent
                 (*ns_window).setOpaque(false);
                 (*ns_window).setBackgroundColor(None);
                 (*ns_window).setHasShadow(false);
+
+                // Make window visible on all Spaces (Desktops)
+                (*ns_window).setCollectionBehavior(
+                    NSWindowCollectionBehavior::CanJoinAllSpaces
+                    | NSWindowCollectionBehavior::Stationary
+                    | NSWindowCollectionBehavior::FullScreenAuxiliary
+                );
+
+                println!("[Window] Configured for all macOS Spaces");
             }
 
             println!("[App] Initialization complete");
