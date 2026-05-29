@@ -137,6 +137,9 @@ yarn tauri dev
 | **Toggle view mode** | Click the view mode button (↗) in app bar |
 | **Logout** | Click the logout button (🚪) in app bar |
 | **Close window** | Click the close button (x) in app bar |
+| **Show mini mode** | Click the tray icon or select "Show Mini Mode" from tray menu |
+| **Show full mode** | Select "Show Full Mode" from tray menu |
+| **Hide window** | Select "Hide Overlay" from tray menu |
 
 ### Lyrics Source Indicator
 

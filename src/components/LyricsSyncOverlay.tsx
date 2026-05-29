@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useSpotifyPolling } from "../hooks/useSpotifyPolling";
 import { useLyricsSync } from "../hooks/useLyricsSync";
@@ -16,6 +16,7 @@ import { playPause, nextTrack, prevTrack } from "../api/spotify";
 import { handleError } from "../utils/errors";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { LogicalSize } from "@tauri-apps/api/dpi";
+import { listen } from "@tauri-apps/api/event";
 
 export default function LyricsSync() {
   const { isLoggedIn, login, logout, submitManualCode } = useAuth();
@@ -32,6 +33,26 @@ export default function LyricsSync() {
   const { currentTheme, themeName, setTheme } = useTheme();
 
   const [viewMode, setViewMode] = useState<ViewMode>("full");
+
+  // Listen for tray icon click to show mini mode
+  useEffect(() => {
+    const unlistenMini = listen("show-mini-mode", async () => {
+      setViewMode("mini");
+      const window = getCurrentWindow();
+      await window.setSize(new LogicalSize(480, 120));
+    });
+
+    const unlistenFull = listen("show-full-mode", async () => {
+      setViewMode("full");
+      const window = getCurrentWindow();
+      await window.setSize(new LogicalSize(480, 350));
+    });
+
+    return () => {
+      unlistenMini.then((fn) => fn());
+      unlistenFull.then((fn) => fn());
+    };
+  }, []);
 
   // Toggle view mode and resize window
   const toggleViewMode = useCallback(async () => {

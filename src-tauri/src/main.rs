@@ -147,31 +147,45 @@ fn main() {
             }
 
             // Tray menu
-            let show = MenuItem::with_id(app, "show", "Show Overlay", true, None::<&str>)?;
+            let show = MenuItem::with_id(app, "show", "Show Full Mode", true, None::<&str>)?;
+            let mini = MenuItem::with_id(app, "mini", "Show Mini Mode", true, None::<&str>)?;
             let hide = MenuItem::with_id(app, "hide", "Hide Overlay", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let tray_menu = Menu::with_items(app, &[&show, &hide, &quit])?;
+            let tray_menu = Menu::with_items(app, &[&show, &mini, &hide, &quit])?;
 
             let _tray = TrayIconBuilder::new()
                 .menu(&tray_menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "show" => {
                         if let Some(win) = app.get_webview_window("main") {
-                            win.show().unwrap();
-                            win.set_focus().unwrap();
+                            let _ = win.emit("show-full-mode", ());
+                            let _ = win.show();
+                            let _ = win.set_focus();
+                        }
+                    }
+                    "mini" => {
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.emit("show-mini-mode", ());
+                            let _ = win.show();
+                            let _ = win.set_focus();
                         }
                     }
                     "hide" => {
                         if let Some(win) = app.get_webview_window("main") {
-                            win.hide().unwrap();
+                            let _ = win.hide();
                         }
                     }
                     "quit" => std::process::exit(0),
                     _ => {}
                 })
-                .on_tray_icon_event(|_app, event| {
+                .on_tray_icon_event(|app, event| {
                     if let TrayIconEvent::Click { .. } = event {
-                        println!("[Tray] Icon clicked");
+                        println!("[Tray] Icon clicked - showing mini mode");
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.emit("show-mini-mode", ());
+                            let _ = win.show();
+                            let _ = win.set_focus();
+                        }
                     }
                 })
                 .build(app)?;

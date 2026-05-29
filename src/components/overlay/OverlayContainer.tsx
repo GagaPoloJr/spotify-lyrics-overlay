@@ -52,9 +52,17 @@ export function OverlayContainer({
             {rightButtons}
             <button
               onClick={() => appWindow.close()}
-              className="w-5 h-5 flex items-center justify-center rounded-full bg-white/5 hover:bg-red-500/80 text-white/30 hover:text-white transition-all group"
+              className="w-5 h-5 flex items-center justify-center rounded-full bg-white/5 hover:bg-red-500/80 text-white/70 hover:text-white transition-all group"
             >
-              <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.5" className="opacity-0 group-hover:opacity-100 transition-opacity">
+              <svg
+                width="8"
+                height="8"
+                viewBox="0 0 8 8"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
+              >
                 <line x1="1" y1="1" x2="7" y2="7" />
                 <line x1="7" y1="1" x2="1" y2="7" />
               </svg>
