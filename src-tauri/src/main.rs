@@ -66,7 +66,7 @@ const CALLBACK_HTML: &str = r#"<!DOCTYPE html>
 </html>"#;
 
 fn main() {
-    // Load .env file at startup
+    // Load .env from filesystem at runtime
     dotenvy::dotenv().ok();
 
     // Start local HTTP server for OAuth callback
@@ -139,6 +139,15 @@ fn main() {
         .setup(move |app| {
             println!("[App] Initializing...");
             let handle = app.handle();
+
+            // Load .env from bundled resources (production) or CWD (dev)
+            if let Ok(resource_dir) = app.path().resource_dir() {
+                let env_path = resource_dir.join(".env");
+                if env_path.exists() {
+                    dotenvy::from_path(&env_path).ok();
+                    println!("[App] Loaded .env from resource_dir: {:?}", env_path);
+                }
+            }
 
             // Store handle for OAuth server
             {
@@ -290,29 +299,37 @@ fn main() {
             }
 
             // Window setup
-            let window: WebviewWindow = app.get_webview_window("main").unwrap();
-            window.set_always_on_top(true)?;
-            window.set_decorations(false)?;
-            window.set_resizable(true)?;
+            if let Some(window) = app.get_webview_window("main") {
+                window.set_always_on_top(true)?;
+                window.set_decorations(false)?;
+                window.set_resizable(true)?;
 
-            #[cfg(target_os = "macos")]
-            unsafe {
-                use objc2_app_kit::{NSWindow, NSWindowCollectionBehavior};
-                let ns_window: *mut NSWindow = window.ns_window().unwrap() as _;
+                #[cfg(target_os = "macos")]
+                match window.ns_window() {
+                    Ok(ns_window_ptr) => {
+                        unsafe {
+                            use objc2_app_kit::{NSWindow, NSWindowCollectionBehavior};
+                            let ns_window: *mut NSWindow = ns_window_ptr as _;
 
-                // Make window transparent
-                (*ns_window).setOpaque(false);
-                (*ns_window).setBackgroundColor(None);
-                (*ns_window).setHasShadow(false);
+                            // Make window transparent
+                            (*ns_window).setOpaque(false);
+                            (*ns_window).setBackgroundColor(None);
+                            (*ns_window).setHasShadow(false);
 
-                // Make window visible on all Spaces (Desktops)
-                (*ns_window).setCollectionBehavior(
-                    NSWindowCollectionBehavior::CanJoinAllSpaces
-                    | NSWindowCollectionBehavior::Stationary
-                    | NSWindowCollectionBehavior::FullScreenAuxiliary
-                );
+                            // Make window visible on all Spaces (Desktops)
+                            (*ns_window).setCollectionBehavior(
+                                NSWindowCollectionBehavior::CanJoinAllSpaces
+                                | NSWindowCollectionBehavior::Stationary
+                                | NSWindowCollectionBehavior::FullScreenAuxiliary
+                            );
 
-                println!("[Window] Configured for all macOS Spaces");
+                            println!("[Window] Configured for all macOS Spaces");
+                        }
+                    }
+                    Err(e) => eprintln!("[Window] ns_window() error: {}", e),
+                }
+            } else {
+                eprintln!("[Window] Main window not found");
             }
 
             println!("[App] Initialization complete");

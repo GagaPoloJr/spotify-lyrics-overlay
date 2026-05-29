@@ -11,8 +11,8 @@ use serde_json::Value;
 
 // --- Environment helpers ---
 
-fn get_client_id() -> String {
-    env::var("SPOTIFY_CLIENT_ID").expect("SPOTIFY_CLIENT_ID must be set in .env")
+fn get_client_id() -> Result<String, String> {
+    env::var("SPOTIFY_CLIENT_ID").map_err(|_| "SPOTIFY_CLIENT_ID not found. Please check your .env file.".to_string())
 }
 
 fn get_redirect_uri() -> String {
@@ -168,7 +168,7 @@ pub async fn refresh_token(app: AppHandle) -> Result<StoredTokens, String> {
         return Err("No refresh token available - please login again".to_string());
     }
 
-    let client_id = get_client_id();
+    let client_id = get_client_id()?;
     let new_tokens = refresh_access_token(&client_id, &tokens.refresh_token).await?;
 
     save_tokens(&app, &new_tokens)?;
@@ -195,7 +195,7 @@ async fn get_valid_token(app: &AppHandle) -> Result<String, String> {
     }
 
     println!("[Auth] Token expired/expiring, refreshing...");
-    let client_id = get_client_id();
+    let client_id = get_client_id()?;
     let new_tokens = refresh_access_token(&client_id, &tokens.refresh_token).await?;
     save_tokens(app, &new_tokens)?;
 
@@ -205,8 +205,8 @@ async fn get_valid_token(app: &AppHandle) -> Result<String, String> {
 // --- OAuth2 PKCE Flow ---
 
 #[tauri::command]
-pub fn spotify_login(code_challenge: String) -> String {
-    let client_id = get_client_id();
+pub fn spotify_login(code_challenge: String) -> Result<String, String> {
+    let client_id = get_client_id()?;
     let redirect_uri = get_redirect_uri();
 
     println!("[Auth] Client ID: {}", &client_id[..8.min(client_id.len())]);
@@ -226,12 +226,12 @@ pub fn spotify_login(code_challenge: String) -> String {
     );
 
     println!("[Auth] Generated login URL with PKCE challenge");
-    auth_url
+    Ok(auth_url)
 }
 
 #[tauri::command]
 pub async fn exchange_token(code: String, code_verifier: String) -> Result<StoredTokens, String> {
-    let client_id = get_client_id();
+    let client_id = get_client_id()?;
     let redirect_uri = get_redirect_uri();
     let client = Client::new();
 
