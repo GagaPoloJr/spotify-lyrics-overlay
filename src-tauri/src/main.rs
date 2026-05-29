@@ -7,7 +7,7 @@ mod history;
 use std::sync::Arc;
 use std::thread;
 use tauri::{
-    menu::{Menu, MenuItem},
+    menu::{Menu, MenuItem, Submenu},
     tray::{TrayIconBuilder, TrayIconEvent},
     Emitter, Manager, WebviewWindow,
 };
@@ -150,8 +150,22 @@ fn main() {
             let show = MenuItem::with_id(app, "show", "Show Full Mode", true, None::<&str>)?;
             let mini = MenuItem::with_id(app, "mini", "Show Mini Mode", true, None::<&str>)?;
             let hide = MenuItem::with_id(app, "hide", "Hide Overlay", true, None::<&str>)?;
+            let zoom_50 = MenuItem::with_id(app, "zoom_50", "50%", true, None::<&str>)?;
+            let zoom_60 = MenuItem::with_id(app, "zoom_60", "60%", true, None::<&str>)?;
+            let zoom_70 = MenuItem::with_id(app, "zoom_70", "70%", true, None::<&str>)?;
+            let zoom_80 = MenuItem::with_id(app, "zoom_80", "80%", true, None::<&str>)?;
+            let zoom_90 = MenuItem::with_id(app, "zoom_90", "90%", true, None::<&str>)?;
+            let zoom_normal = MenuItem::with_id(app, "zoom_normal", "100%", true, None::<&str>)?;
+            let zoom_large = MenuItem::with_id(app, "zoom_large", "120%", true, None::<&str>)?;
+            let zoom_xl = MenuItem::with_id(app, "zoom_xl", "140%", true, None::<&str>)?;
+            let zoom_menu = Submenu::with_items(
+                app,
+                "Zoom",
+                true,
+                &[&zoom_50, &zoom_60, &zoom_70, &zoom_80, &zoom_90, &zoom_normal, &zoom_large, &zoom_xl],
+            )?;
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let tray_menu = Menu::with_items(app, &[&show, &mini, &hide, &quit])?;
+            let tray_menu = Menu::with_items(app, &[&show, &mini, &hide, &zoom_menu, &quit])?;
 
             let _tray = TrayIconBuilder::new()
                 .menu(&tray_menu)
@@ -173,6 +187,46 @@ fn main() {
                     "hide" => {
                         if let Some(win) = app.get_webview_window("main") {
                             let _ = win.hide();
+                        }
+                    }
+                    "zoom_50" => {
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.emit("set-zoom", 0.5);
+                        }
+                    }
+                    "zoom_60" => {
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.emit("set-zoom", 0.6);
+                        }
+                    }
+                    "zoom_70" => {
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.emit("set-zoom", 0.7);
+                        }
+                    }
+                    "zoom_80" => {
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.emit("set-zoom", 0.8);
+                        }
+                    }
+                    "zoom_90" => {
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.emit("set-zoom", 0.9);
+                        }
+                    }
+                    "zoom_normal" => {
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.emit("set-zoom", 1.0);
+                        }
+                    }
+                    "zoom_large" => {
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.emit("set-zoom", 1.2);
+                        }
+                    }
+                    "zoom_xl" => {
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.emit("set-zoom", 1.4);
                         }
                     }
                     "quit" => std::process::exit(0),

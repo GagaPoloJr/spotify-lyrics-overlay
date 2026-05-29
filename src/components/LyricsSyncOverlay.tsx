@@ -33,6 +33,10 @@ export default function LyricsSync() {
   const { currentTheme, themeName, setTheme } = useTheme();
 
   const [viewMode, setViewMode] = useState<ViewMode>("full");
+  const [zoom, setZoom] = useState<number>(() => {
+    const stored = localStorage.getItem("zoom-level");
+    return stored ? parseFloat(stored) : 1.0;
+  });
 
   // Listen for tray icon click to show mini mode
   useEffect(() => {
@@ -50,9 +54,15 @@ export default function LyricsSync() {
       await window.setSize(new LogicalSize(480, 350));
     });
 
+    const unlistenZoom = listen<number>("set-zoom", (event) => {
+      setZoom(event.payload);
+      localStorage.setItem("zoom-level", String(event.payload));
+    });
+
     return () => {
       unlistenMini.then((fn) => fn());
       unlistenFull.then((fn) => fn());
+      unlistenZoom.then((fn) => fn());
     };
   }, []);
 
@@ -106,7 +116,7 @@ export default function LyricsSync() {
     return (
       <div
         className="w-full h-full select-none flex flex-col overflow-hidden relative rounded-xl"
-        style={{ backgroundColor: currentTheme.backgroundColor }}
+        style={{ backgroundColor: currentTheme.backgroundColor, zoom }}
       >
         {/* App Bar */}
         <div
@@ -190,6 +200,7 @@ export default function LyricsSync() {
         header={track ? <TrackInfo track={track} lyricsSource={lyricsSource} currentProgressMs={currentProgressMs} onPlayPause={handlePlayPause} onNext={handleNext} onPrev={handlePrev} /> : null}
         albumArt={track?.album_art}
         theme={currentTheme}
+        zoom={zoom}
         rightButtons={
           <>
             <ViewModeToggle mode={viewMode} onToggle={toggleViewMode} />

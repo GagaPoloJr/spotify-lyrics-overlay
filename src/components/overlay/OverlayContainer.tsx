@@ -10,6 +10,7 @@ interface OverlayContainerProps {
   albumArt?: string | null;
   theme?: Theme;
   rightButtons?: ReactNode;
+  zoom?: number;
 }
 
 export function OverlayContainer({
@@ -19,6 +20,7 @@ export function OverlayContainer({
   albumArt,
   theme,
   rightButtons,
+  zoom,
 }: OverlayContainerProps) {
   const appWindow = getCurrentWindow();
   const bgColor = theme?.backgroundColor || "#0a0a0a";
@@ -26,7 +28,7 @@ export function OverlayContainer({
   return (
     <div
       className="w-full h-full select-none flex flex-col overflow-hidden rounded-xl"
-      style={{ backgroundColor: bgColor }}
+      style={{ backgroundColor: bgColor, zoom }}
     >
       {/* Album Art Background */}
       {albumArt && <AlbumArtBackground imageUrl={albumArt} opacity={0.25} />}
