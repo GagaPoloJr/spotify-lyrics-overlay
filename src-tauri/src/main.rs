@@ -178,9 +178,10 @@ fn main() {
                     "quit" => std::process::exit(0),
                     _ => {}
                 })
-                .on_tray_icon_event(|app, event| {
+                .on_tray_icon_event(|tray, event| {
                     if let TrayIconEvent::Click { .. } = event {
                         println!("[Tray] Icon clicked - showing mini mode");
+                        let app = tray.app_handle();
                         if let Some(win) = app.get_webview_window("main") {
                             let _ = win.emit("show-mini-mode", ());
                             let _ = win.show();
