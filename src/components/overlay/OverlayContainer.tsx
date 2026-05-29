@@ -25,7 +25,7 @@ export function OverlayContainer({
 
   return (
     <div
-      className="w-full h-full select-none flex flex-col overflow-hidden"
+      className="w-full h-full select-none flex flex-col overflow-hidden rounded-xl"
       style={{ backgroundColor: bgColor }}
     >
       {/* Album Art Background */}
@@ -50,9 +50,11 @@ export function OverlayContainer({
         {isLoggedIn && (
           <div className="flex items-center gap-1">
             {rightButtons}
+            {/* Minimize button */}
             <button
-              onClick={() => appWindow.close()}
-              className="w-5 h-5 flex items-center justify-center rounded-full bg-white/5 hover:bg-red-500/80 text-white/70 hover:text-white transition-all group"
+              onClick={() => appWindow.hide()}
+              className="w-5 h-5 flex items-center justify-center rounded-full bg-white/5 hover:bg-yellow-500/80 text-white/70 hover:text-white transition-all"
+              title="Minimize"
             >
               <svg
                 width="8"
@@ -61,7 +63,22 @@ export function OverlayContainer({
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.5"
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <line x1="1" y1="4" x2="7" y2="4" />
+              </svg>
+            </button>
+            {/* Close button */}
+            <button
+              onClick={() => appWindow.hide()}
+              className="w-5 h-5 flex items-center justify-center rounded-full bg-white/5 hover:bg-red-500/80 text-white/70 hover:text-white transition-all"
+            >
+              <svg
+                width="8"
+                height="8"
+                viewBox="0 0 8 8"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
               >
                 <line x1="1" y1="1" x2="7" y2="7" />
                 <line x1="7" y1="1" x2="1" y2="7" />

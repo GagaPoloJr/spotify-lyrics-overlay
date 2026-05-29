@@ -39,7 +39,7 @@ export default function LyricsSync() {
     const unlistenMini = listen("show-mini-mode", async () => {
       setViewMode("mini");
       const window = getCurrentWindow();
-      await window.setSize(new LogicalSize(480, 120));
+      await window.setSize(new LogicalSize(200, 100));
     });
 
     const unlistenFull = listen("show-full-mode", async () => {
@@ -61,7 +61,7 @@ export default function LyricsSync() {
 
     const window = getCurrentWindow();
     if (newMode === "mini") {
-      await window.setSize(new LogicalSize(480, 120));
+      await window.setSize(new LogicalSize(200, 100));
     } else {
       await window.setSize(new LogicalSize(480, 350));
     }
@@ -101,7 +101,7 @@ export default function LyricsSync() {
   if (viewMode === "mini" && track) {
     return (
       <div
-        className="w-full h-full select-none flex flex-col overflow-hidden relative"
+        className="w-full h-full select-none flex flex-col overflow-hidden relative rounded-xl"
         style={{ backgroundColor: currentTheme.backgroundColor }}
       >
         {/* App Bar */}
@@ -121,6 +121,7 @@ export default function LyricsSync() {
           </div>
 
           <div className="flex items-center gap-1">
+            <ViewModeToggle mode={viewMode} onToggle={toggleViewMode} />
             <ThemeSwitcher currentTheme={themeName} onThemeChange={setTheme} />
             <button
               onClick={logout}
@@ -133,9 +134,19 @@ export default function LyricsSync() {
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
             </button>
-            <ViewModeToggle mode={viewMode} onToggle={toggleViewMode} />
+            {/* Minimize button */}
             <button
-              onClick={() => getCurrentWindow().close()}
+              onClick={() => getCurrentWindow().hide()}
+              className="w-5 h-5 flex items-center justify-center rounded-full bg-white/5 hover:bg-yellow-500/80 text-white/30 hover:text-white transition-all"
+              title="Minimize"
+            >
+              <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <line x1="1" y1="4" x2="7" y2="4" />
+              </svg>
+            </button>
+            {/* Close button */}
+            <button
+              onClick={() => getCurrentWindow().hide()}
               className="w-5 h-5 flex items-center justify-center rounded-full bg-white/5 hover:bg-red-500/80 text-white/30 hover:text-white transition-all"
             >
               <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.5">

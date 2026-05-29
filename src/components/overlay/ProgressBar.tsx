@@ -21,7 +21,7 @@ export function ProgressBar({ progressMs, durationMs, isPlaying, compact = false
       <div className="px-3 py-1">
         <div className="h-0.5 bg-white/5 rounded-full overflow-hidden">
           <div
-            className="h-full bg-white/20 rounded-full transition-all duration-200 ease-linear"
+            className="h-full bg-green-500/50 rounded-full transition-all duration-200 ease-linear"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -43,7 +43,7 @@ export function ProgressBar({ progressMs, durationMs, isPlaying, compact = false
           className="h-full rounded-full transition-all duration-200 ease-linear relative"
           style={{
             width: `${progress}%`,
-            backgroundColor: isPlaying ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.15)",
+            backgroundColor: isPlaying ? "#22c55e" : "rgba(255,255,255,0.15)",
           }}
         >
           {/* Dot at end */}

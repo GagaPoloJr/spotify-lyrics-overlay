@@ -180,10 +180,9 @@ fn main() {
                 })
                 .on_tray_icon_event(|tray, event| {
                     if let TrayIconEvent::Click { .. } = event {
-                        println!("[Tray] Icon clicked - showing mini mode");
+                        println!("[Tray] Icon clicked");
                         let app = tray.app_handle();
                         if let Some(win) = app.get_webview_window("main") {
-                            let _ = win.emit("show-mini-mode", ());
                             let _ = win.show();
                             let _ = win.set_focus();
                         }
