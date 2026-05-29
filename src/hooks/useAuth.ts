@@ -204,10 +204,27 @@ export function useAuth() {
     }
   }, []);
 
+  // Logout function
+  const logout = useCallback(async () => {
+    try {
+      console.log("[Auth] Logging out...");
+      const store = await load("spotify_tokens.json");
+      await store.clear();
+      await store.save();
+
+      localStorage.removeItem("pkce_verifier");
+      setIsLoggedIn(false);
+      console.log("[Auth] Logged out successfully");
+    } catch (error) {
+      console.error("[Auth] Logout failed:", error);
+    }
+  }, []);
+
   return {
     isLoggedIn,
     isChecking,
     login,
+    logout,
     checkLoginStatus,
     submitManualCode,
   };

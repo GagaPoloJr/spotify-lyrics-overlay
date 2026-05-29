@@ -1,5 +1,6 @@
 import { RefObject } from "react";
 import { SyncedLyric } from "../../services/lyrics";
+import { Theme } from "../../config/themes";
 
 interface LyricsDisplayProps {
   lyrics: SyncedLyric[];
@@ -7,6 +8,7 @@ interface LyricsDisplayProps {
   isLoading: boolean;
   containerRef: RefObject<HTMLDivElement | null>;
   setLineRef: (index: number) => (el: HTMLDivElement | null) => void;
+  theme?: Theme;
 }
 
 export function LyricsDisplay({
@@ -15,11 +17,15 @@ export function LyricsDisplay({
   isLoading,
   containerRef,
   setLineRef,
+  theme,
 }: LyricsDisplayProps) {
+  const activeColor = theme?.activeLineColor || "#ffffff";
+  const activeGlow = theme?.activeLineGlow || "rgba(255, 255, 255, 0.2)";
+
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center pointer-events-none">
-        <div className="text-white/30 text-xs animate-pulse">
+        <div className="text-slate-500 text-xs animate-pulse">
           Loading lyrics...
         </div>
       </div>
@@ -29,9 +35,7 @@ export function LyricsDisplay({
   if (!lyrics.length) {
     return (
       <div className="h-full flex items-center justify-center pointer-events-none">
-        <div className="text-white/20 text-xs">
-          No lyrics available
-        </div>
+        <div className="text-slate-600 text-xs">No lyrics available</div>
       </div>
     );
   }
@@ -39,28 +43,39 @@ export function LyricsDisplay({
   return (
     <div
       ref={containerRef}
-      className="h-full overflow-y-auto px-6 py-4 flex flex-col items-center gap-2 scrollbar-none"
+      className="h-full overflow-y-auto px-6 py-4 flex flex-col items-center gap-2"
       style={{
         WebkitAppRegion: "no-drag",
         scrollbarWidth: "none",
         msOverflowStyle: "none",
       } as React.CSSProperties}
     >
-      {lyrics.map((line, i) => (
-        <div
-          key={i}
-          ref={setLineRef(i)}
-          className={`transition-all duration-500 ease-out text-center cursor-default py-1 w-full ${
-            i === activeLine
-              ? "text-white text-lg font-semibold scale-105 drop-shadow-[0_0_12px_rgba(255,255,255,0.2)]"
-              : i < activeLine
-              ? "text-white/15 text-sm"
-              : "text-white/35 text-sm"
-          }`}
-        >
-          {line.text}
-        </div>
-      ))}
+      {lyrics.map((line, i) => {
+        const isActive = i === activeLine;
+        const isPast = i < activeLine;
+
+        return (
+          <div
+            key={i}
+            ref={setLineRef(i)}
+            className={`text-center cursor-default py-1 w-full transition-all duration-500 ease-out ${
+              isActive ? "text-lg font-semibold" : "text-sm"
+            }`}
+            style={{
+              color: isActive
+                ? activeColor
+                : isPast
+                ? "rgb(71, 85, 105)" // slate-500 (past - dimmed)
+                : "rgb(148, 163, 184)", // slate-400 (future - visible)
+              textShadow: isActive ? `0 0 12px ${activeGlow}` : "none",
+              opacity: isActive ? 1 : isPast ? 0.5 : 0.7,
+              transform: isActive ? "scale(1.05)" : "scale(1)",
+            }}
+          >
+            {line.text}
+          </div>
+        );
+      })}
     </div>
   );
 }

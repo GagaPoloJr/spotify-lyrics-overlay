@@ -9,6 +9,7 @@ export function useLyricsSync(
 ) {
   const [activeLine, setActiveLine] = useState(-1);
   const [isSyncEnabled, setIsSyncEnabled] = useState(true);
+  const [currentLyric, setCurrentLyric] = useState<string>("");
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
   const lineRefs = useRef<(HTMLDivElement | null)[]>([]);
   const startTimestampRef = useRef<number>(0);
@@ -24,6 +25,7 @@ export function useLyricsSync(
       startTimestampRef.current = Date.now() - track.progress_ms;
       setActiveLine(-1);
       setIsSyncEnabled(true);
+      setCurrentLyric("");
     }
   }, [track?.id]);
 
@@ -32,11 +34,8 @@ export function useLyricsSync(
     const container = lyricsContainerRef.current;
     if (!container) return;
 
-    // Only scroll if lyrics actually changed (new fetch)
     if (lyrics.length > 0 && lyrics.length !== prevLyricsLengthRef.current) {
       prevLyricsLengthRef.current = lyrics.length;
-
-      // Scroll to top immediately (no animation for initial load)
       container.scrollTo({ top: 0, behavior: "instant" });
     }
   }, [lyrics]);
@@ -85,6 +84,7 @@ export function useLyricsSync(
 
       if (index !== -1 && index !== activeLine) {
         setActiveLine(index);
+        setCurrentLyric(lyrics[index].text);
         scrollToLine(index);
       }
     }, 400);
@@ -116,5 +116,6 @@ export function useLyricsSync(
     lyricsContainerRef,
     setLineRef,
     scrollToTop,
+    currentLyric,
   };
 }

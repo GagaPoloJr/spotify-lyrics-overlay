@@ -17,7 +17,7 @@ fn get_client_id() -> String {
 
 fn get_redirect_uri() -> String {
     env::var("SPOTIFY_REDIRECT_URI")
-        .unwrap_or_else(|_| "haikal-spotify://callback".to_string())
+        .unwrap_or_else(|_| "http://127.0.0.1:1421/callback".to_string())
 }
 
 // --- Token storage types ---
@@ -211,7 +211,6 @@ pub fn spotify_login(code_challenge: String) -> String {
 
     println!("[Auth] Client ID: {}", &client_id[..8.min(client_id.len())]);
     println!("[Auth] Redirect URI: {}", redirect_uri);
-    println!("[Auth] Code Challenge: {}", &code_challenge[..8.min(code_challenge.len())]);
 
     let auth_url = format!(
         "https://accounts.spotify.com/authorize?\
@@ -220,7 +219,7 @@ pub fn spotify_login(code_challenge: String) -> String {
          redirect_uri={}&\
          code_challenge_method=S256&\
          code_challenge={}&\
-         scope=user-read-currently-playing",
+         scope=user-read-currently-playing%20user-modify-playback-state",
         client_id,
         urlencoding::encode(&redirect_uri),
         code_challenge
@@ -340,8 +339,14 @@ pub async fn get_current_track(app: AppHandle) -> Result<serde_json::Value, Stri
         .as_str()
         .unwrap_or("Unknown Album")
         .to_string();
+    let album_art = track_info["album"]["images"]
+        .as_array()
+        .and_then(|images| images.first())
+        .and_then(|img| img["url"].as_str())
+        .map(|s| s.to_string());
     let progress_ms = json["progress_ms"].as_i64().unwrap_or(0);
     let duration_ms = track_info["duration_ms"].as_i64().unwrap_or(0);
+    let is_playing = json["is_playing"].as_bool().unwrap_or(false);
 
     println!(
         "[Spotify] Now Playing: {} - {} ({} / {})",
@@ -353,8 +358,10 @@ pub async fn get_current_track(app: AppHandle) -> Result<serde_json::Value, Stri
         "name": name,
         "artist": artist,
         "album": album,
+        "album_art": album_art,
         "progress_ms": progress_ms,
-        "duration_ms": duration_ms
+        "duration_ms": duration_ms,
+        "is_playing": is_playing
     }))
 }
 
@@ -423,4 +430,178 @@ pub async fn get_synced_lyrics(track_id: String, token: String) -> Result<String
 
     println!("[Spotify Lyrics] Got synced lyrics for track {}", track_id);
     Ok(body)
+}
+
+// --- Spotify Connect (Playback Controls) ---
+// IMPORTANT: These endpoints require Spotify Premium
+
+#[tauri::command]
+pub async fn get_user_product(app: AppHandle) -> Result<String, String> {
+    let token = get_valid_token(&app).await?;
+    let client = Client::new();
+
+    let response = client
+        .get("https://api.spotify.com/v1/me")
+        .header("Authorization", format!("Bearer {}", token))
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !response.status().is_success() {
+        return Err("Failed to get user profile".to_string());
+    }
+
+    let json: Value = response.json().await.map_err(|e| e.to_string())?;
+    let product = json["product"].as_str().unwrap_or("free").to_string();
+    
+    println!("[Spotify] User product: {}", product);
+    Ok(product)
+}
+
+#[tauri::command]
+pub async fn spotify_play_pause(app: AppHandle) -> Result<(), String> {
+    let token = get_valid_token(&app).await?;
+    let client = Client::new();
+
+    // First check if user has Premium
+    let profile_response = client
+        .get("https://api.spotify.com/v1/me")
+        .header("Authorization", format!("Bearer {}", token))
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !profile_response.status().is_success() {
+        return Err("Cannot verify account. Please login again.".to_string());
+    }
+
+    let profile: Value = profile_response.json().await.map_err(|e| e.to_string())?;
+    let product = profile["product"].as_str().unwrap_or("free");
+    
+    if product != "premium" {
+        return Err("Playback control requires Spotify Premium".to_string());
+    }
+
+    println!("[Spotify] User has Premium, proceeding with playback control");
+
+    // Get current player state
+    let response = client
+        .get("https://api.spotify.com/v1/me/player")
+        .header("Authorization", format!("Bearer {}", token))
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // 204 means no active device
+    if response.status().as_u16() == 204 {
+        return Err("No active device. Open Spotify on a device first.".to_string());
+    }
+
+    if !response.status().is_success() {
+        let status = response.status();
+        if status.as_u16() == 401 {
+            return Err("Session expired. Please login again.".to_string());
+        }
+        return Err(format!("Cannot get player state (status: {})", status));
+    }
+
+    let json: Value = response.json().await.map_err(|e| e.to_string())?;
+    let is_playing = json["is_playing"].as_bool().unwrap_or(false);
+    let device_id = json["device"]["id"].as_str().unwrap_or("");
+    let device_name = json["device"]["name"].as_str().unwrap_or("Unknown");
+
+    println!("[Spotify] Current device: {} ({}), playing: {}", device_name, device_id, is_playing);
+
+    let endpoint = if is_playing {
+        format!("https://api.spotify.com/v1/me/player/pause?device_id={}", device_id)
+    } else {
+        format!("https://api.spotify.com/v1/me/player/play?device_id={}", device_id)
+    };
+
+    // PUT request according to Spotify docs
+    let resp = client
+        .put(endpoint)
+        .header("Authorization", format!("Bearer {}", token))
+        .header("Content-Length", "0")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    match resp.status().as_u16() {
+        200 | 204 => {
+            println!("[Spotify] {}", if is_playing { "Paused" } else { "Playing" });
+            Ok(())
+        }
+        401 => Err("Session expired. Please login again.".to_string()),
+        403 => Err("Playback control requires Spotify Premium.".to_string()),
+        404 => Err("No active device found. Open Spotify first.".to_string()),
+        429 => Err("Too many requests. Please wait a moment.".to_string()),
+        status => {
+            let body = resp.text().await.unwrap_or_default();
+            println!("[Spotify] Play/pause error: {} - {}", status, body);
+            Err(format!("Playback control failed (status: {})", status))
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn spotify_next(app: AppHandle) -> Result<(), String> {
+    let token = get_valid_token(&app).await?;
+    let client = Client::new();
+
+    // POST request with Content-Length: 0
+    let resp = client
+        .post("https://api.spotify.com/v1/me/player/next")
+        .header("Authorization", format!("Bearer {}", token))
+        .header("Content-Length", "0")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    match resp.status().as_u16() {
+        200 | 204 => {
+            println!("[Spotify] Next track");
+            Ok(())
+        }
+        401 => Err("Session expired. Please login again.".to_string()),
+        403 => Err("Skipping tracks requires Spotify Premium.".to_string()),
+        404 => Err("No active device found. Open Spotify first.".to_string()),
+        429 => Err("Too many requests. Please wait a moment.".to_string()),
+        status => {
+            let body = resp.text().await.unwrap_or_default();
+            println!("[Spotify] Next track error: {} - {}", status, body);
+            Err(format!("Cannot skip track (status: {})", status))
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn spotify_prev(app: AppHandle) -> Result<(), String> {
+    let token = get_valid_token(&app).await?;
+    let client = Client::new();
+
+    // POST request with Content-Length: 0
+    let resp = client
+        .post("https://api.spotify.com/v1/me/player/previous")
+        .header("Authorization", format!("Bearer {}", token))
+        .header("Content-Length", "0")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    match resp.status().as_u16() {
+        200 | 204 => {
+            println!("[Spotify] Previous track");
+            Ok(())
+        }
+        401 => Err("Session expired. Please login again.".to_string()),
+        403 => Err("Skipping tracks requires Spotify Premium.".to_string()),
+        404 => Err("No active device found. Open Spotify first.".to_string()),
+        429 => Err("Too many requests. Please wait a moment.".to_string()),
+        status => {
+            let body = resp.text().await.unwrap_or_default();
+            println!("[Spotify] Previous track error: {} - {}", status, body);
+            Err(format!("Cannot go to previous track (status: {})", status))
+        }
+    }
 }

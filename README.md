@@ -2,6 +2,12 @@
 
 A desktop application that displays time-synced lyrics as a transparent overlay on top of Spotify. Built with **Tauri v2 + React + TypeScript**.
 
+## Why I Built This
+
+I love listening to Spotify while working, but sometimes I only have one screen. The Spotify window takes up space, and I can't see the lyrics while working on other things. So I tried to build this - a lightweight, always-on-top overlay that shows synced lyrics without interrupting my workflow.
+
+The overlay window stays on top of all other windows, so you can see lyrics while working, browsing, or doing anything else on your desktop.
+
 ![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)
 ![Tauri](https://img.shields.io/badge/Tauri-v2-blue)
 ![React](https://img.shields.io/badge/React-v19-blue)
@@ -16,18 +22,23 @@ A desktop application that displays time-synced lyrics as a transparent overlay 
 - 🎨 **Dark theme** - Minimalist, clean UI
 - 🖱️ **Draggable** - Move window by dragging the title bar
 - ⏸️ **Pause detection** - Automatically pauses sync when playback stops
+- ▶️ **Playback controls** - Play/pause, next, previous track
+- 🎨 **Theme switcher** - Multiple theme options
+- 📱 **View modes** - Full and mini overlay modes
+- 🔔 **Toast notifications** - User-friendly error messages
 
 ## Screenshots
 
+### Full Mode
 ```
 ┌──────────────────────────────────────────────────┐
-│ ● Spotify Lyrics                             [x] │
+│ ● Spotify Lyrics        [🎨] [↗] [🚪] [x]      │
 ├──────────────────────────────────────────────────┤
-│                                                  │
-│             Bohemian Rhapsody                    │
-│                Queen                             │
-│              ● SPOTIFY                           │
-│──────────────────────────────────────────────────│
+│ ┌──────┐                                         │
+│ │      │  Bohemian Rhapsody                      │
+│ │ Art  │  Queen                                  │
+│ │      │  ● SPOTIFY                              │
+│ └──────┘  ─────────────────────────────────────  │
 │                                                  │
 │              Is this the real life?               │
 │              Is this just fantasy?                │
@@ -35,9 +46,24 @@ A desktop application that displays time-synced lyrics as a transparent overlay 
 │           ● Caught in a landslide                 │
 │                                                  │
 │              No escape from reality               │
+│                                                  │
+│         ⏮   ▶   ⏭                               │
+│                                                  │
 │                                ┌────┐            │
 │                                │ 🟢 │            │
 │                                └────┘            │
+└──────────────────────────────────────────────────┘
+```
+
+### Mini Mode
+```
+┌──────────────────────────────────────────────────┐
+│ ● Spotify Lyrics   [🎨] [🚪] [↗] [x]           │
+├──────────────────────────────────────────────────┤
+│ ┌────┐                                            │
+│ │    │  Caught in a landslide        ⏮  ▶  ⏭   │
+│ └────┘  Queen                                      │
+│ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ │
 └──────────────────────────────────────────────────┘
 ```
 
@@ -103,9 +129,14 @@ yarn tauri dev
 | Action | How |
 |--------|-----|
 | **Move window** | Drag the title bar |
-| **Toggle sync** | Click the green dot (top-right) |
-| **Hide window** | Click the close button (x) |
-| **Show window** | Click the tray icon → "Show Overlay" |
+| **Toggle sync** | Click the green dot (bottom-right) |
+| **Play/Pause** | Click the play/pause button in track info or bottom controls |
+| **Next track** | Click the next button (⏭) |
+| **Previous track** | Click the previous button (⏮) |
+| **Switch theme** | Click the theme button (🎨) in app bar |
+| **Toggle view mode** | Click the view mode button (↗) in app bar |
+| **Logout** | Click the logout button (🚪) in app bar |
+| **Close window** | Click the close button (x) in app bar |
 
 ### Lyrics Source Indicator
 
@@ -120,24 +151,35 @@ yarn tauri dev
 spotify-lyrics-overlay/
 ├── src/                          # Frontend (React + TypeScript)
 │   ├── api/
-│   │   └── spotify.ts            # Spotify API calls
+│   │   ├── spotify.ts            # Spotify API calls
+│   │   └── lyrics.ts             # Lyrics API calls
 │   ├── components/
 │   │   ├── LyricsSyncOverlay.tsx # Main component
+│   │   ├── Toast.tsx             # Toast notification system
 │   │   └── overlay/
 │   │       ├── LoginScreen.tsx   # Login UI
 │   │       ├── OverlayContainer.tsx # Window container
-│   │       ├── TrackInfo.tsx     # Track metadata
+│   │       ├── TrackInfo.tsx     # Track metadata + playback controls
 │   │       ├── LyricsDisplay.tsx # Lyrics renderer
-│   │       └── SyncToggle.tsx    # Sync toggle button
+│   │       ├── SyncToggle.tsx    # Sync toggle button
+│   │       ├── MiniOverlay.tsx   # Mini mode overlay
+│   │       ├── ProgressBar.tsx   # Progress bar
+│   │       ├── ViewModeToggle.tsx # Full/mini mode toggle
+│   │       ├── ThemeSwitcher.tsx # Theme selector
+│   │       └── AlbumArtBackground.tsx # Album art background
 │   ├── hooks/
 │   │   ├── useAuth.ts            # Authentication logic
 │   │   ├── useSpotifyPolling.ts  # Track polling & lyrics
 │   │   ├── useLyricsSync.ts      # Active line sync
+│   │   ├── useTheme.ts           # Theme management
 │   │   └── useScrollTop.ts       # Scroll tracking
 │   ├── services/
 │   │   └── lyrics.ts             # Lyrics fetching (dual source)
+│   ├── config/
+│   │   └── themes.ts             # Theme definitions
 │   ├── utils/
-│   │   └── pkce.ts               # PKCE challenge generation
+│   │   ├── pkce.ts               # PKCE challenge generation
+│   │   └── errors.ts             # Error handling & toast messages
 │   └── App.tsx                   # Root component
 │
 ├── src-tauri/                    # Backend (Rust + Tauri v2)
@@ -238,6 +280,12 @@ cd src-tauri && cargo check
 1. Check if you have an active Spotify playback
 2. Look at terminal logs for API errors
 3. Try logging out and logging in again
+
+### Playback controls not working
+
+1. Make sure you have **Spotify Premium** (required for playback control)
+2. Open Spotify on a device first
+3. Check if you see a toast notification with the error message
 
 ### Window not draggable
 

@@ -14,7 +14,7 @@ export function SyncToggle({ isEnabled, onToggle }: SyncToggleProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={`
-        group fixed top-20 right-3 z-30
+        group fixed bottom-4 right-3 z-30
         flex items-center rounded-full
         transition-all duration-300 ease-out
         ${isHovered ? "px-3 py-1.5 gap-2" : "px-2.5 py-1.5 gap-0"}

@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod spotify;
+mod history;
 
 use std::sync::Arc;
 use std::thread;
@@ -128,6 +129,12 @@ fn main() {
             spotify::get_current_track,
             spotify::get_synced_lyrics,
             spotify::get_spotify_lyrics_token,
+            spotify::get_user_product,
+            spotify::spotify_play_pause,
+            spotify::spotify_next,
+            spotify::spotify_prev,
+            history::save_lyrics_to_history_cmd,
+            history::get_lyrics_from_history_cmd,
         ])
         .setup(move |app| {
             println!("[App] Initializing...");
